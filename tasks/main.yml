@@ -1,2 +1,46 @@
 ---
-# tasks file for redhat-to-centos
+- hosts: current
+  sudo: true
+
+  tasks:
+    - name: create project directory
+      file: state=directory path=/tmp/ansible
+
+  tasks:
+    - name: download sources
+      get_url: url=http://mirror.centos.org/centos/6.5/os/x86_64/RPM-GPG-KEY-CentOS-6 dest=/tmp/ansible dest=/tmp/ansible
+      get_url: url=http://mirror.centos.org/centos/6.5/os/x86_64/Packages/centos-release-6-5.el6.centos.11.1.x86_64.rpm dest=/tmp/ansible
+      get_url: url=http://mirror.centos.org/centos/6.5/os/x86_64/Packages/centos-indexhtml-6-1.el6.centos.noarch.rpm dest=/tmp/ansible
+      get_url: url=http://mirror.centos.org/centos/6.5/os/x86_64/Packages/yum-3.2.29-40.el6.centos.noarch.rpm dest=/tmp/ansible
+      get_url: url:http://mirror.centos.org/centos/6.5/os/x86_64/Packages/yum-plugin-fastestmirror-1.1.30-14.el6.noarch.rpm dest=/tmp/ansible
+
+  tasks: 
+    - name: import GPG key 
+      command: rpm --import RPM-GPG-KEY-CentOS6
+
+  tasks:
+    - name: Remove RHEL Packages
+      yum: name={{ item  }} state=absent
+      with_items:
+        - rhnlib
+        - abrt-plugin-bugzilla
+        - redhat-release-notes*
+  tasks:
+    - name: Remove RHELPackages cont.
+      command: rpm -e --nodeps redhat-release-server-6Server redhat-indexhtml
+
+  tasks:
+    - name: Remove any Left over subscritpion information
+      command: subscription-manager clean
+
+  tasks:
+    - name: Remove any left over subscription info
+      yum: name=subscription-manager state=absent
+
+  tasks:
+    - name: Force install rpms we downloaded
+      command: rpm -Uvh --force /tmp/ansible/*.rpmi
+
+  tasks:
+    - name: yum upgrade
+      yum: name=* state=latest update_cache=yes
